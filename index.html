@@ -78,7 +78,12 @@ function renderMoney(){
  el.onpointermove=e=>{let rect=el.getBoundingClientRect(),sx=(e.clientX-rect.left)*720/rect.width;let i=Math.max(0,Math.min(subset.length-1,Math.round((sx-L)/W*(subset.length-1))));let v=subset[i][metric],x=X(i),y=Y(v);
  hoverLine.setAttribute('x1',x);hoverLine.setAttribute('x2',x);hoverLine.setAttribute('visibility','visible');
  hoverDot.setAttribute('cx',x);hoverDot.setAttribute('cy',y);hoverDot.setAttribute('visibility','visible');
- tip.innerHTML='<div class="tt-date">'+subset[i].date.slice(0,7)+'</div><div class="tt-value">'+metric.toUpperCase()+': +fmt(v/1000,3)+'tn</div><div>USD '+fmt(v,1)+' billion</div>';tip.hidden=false;
+ tip.innerHTML='<div class="tt-date">'+subset[i].date.slice(0,7)+'</div><div class="tt-value">'+metric.toUpperCase()+': </div><div>USD '+fmt(v,1)+' billion</div>';tip.hidden=false;
+ const shell=el.parentElement;let bx=(x/720)*rect.width;tip.style.left=Math.max(4,Math.min(bx+15,shell.clientWidth-190))+'px';tip.style.top=Math.max(4,(y/300)*rect.height-66)+'px';
+ };
+ el.onpointerleave=()=>{tip.hidden=true;hoverLine.setAttribute('visibility','hidden');hoverDot.setAttribute('visibility','hidden')};
+}
+</script></body></html>+fmt(v/1000,3)+'tn</div><div>USD '+fmt(v,1)+' billion</div>';tip.hidden=false;
  const shell=el.parentElement;let bx=(x/720)*rect.width;tip.style.left=Math.max(4,Math.min(bx+15,shell.clientWidth-190))+'px';tip.style.top=Math.max(4,(y/300)*rect.height-66)+'px';
  };
  el.onpointerleave=()=>{tip.hidden=true;hoverLine.setAttribute('visibility','hidden');hoverDot.setAttribute('visibility','hidden')};
