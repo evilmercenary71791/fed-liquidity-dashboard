@@ -82,7 +82,7 @@ def prepare_money_supply():
         raise RuntimeError(f"M2 observations are stale: {latest_m2}")
     dates = sorted(set().union(*[set(series) for series in stocks.values()]))
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["date", "m1", "m2", "m3"], lineterminator="\\n")
+    writer = csv.DictWriter(output, fieldnames=["date", "m1", "m2", "m3"], lineterminator="\n")
     writer.writeheader()
     for day in dates:
         writer.writerow({"date": day, **{k: (round(stocks[k][day], 3) if day in stocks[k] else "") for k in MONEY_SERIES}})
@@ -99,7 +99,7 @@ def prepare_money_supply():
         "m1_definition_change": "2020-05",
         "m3_discontinued": "2006-03",
     }
-    return output.getvalue(), json.dumps(metadata, indent=2) + "\\n"
+    return output.getvalue(), json.dumps(metadata, indent=2) + "\n"
 
 def main():
     downloaded = {}
