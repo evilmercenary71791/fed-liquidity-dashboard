@@ -1,7 +1,7 @@
 {
   "source": "H.4.1 Wednesday levels via FRED",
   "unit": "USD billions",
-  "refreshed_at_utc": "2026-11-20T18:15:56+00:00",
+  "refreshed_at_utc": "2026-11-20T18:29:15+00:00",
   "first_observation": "2002-12-18",
   "latest_observation": "2026-11-18",
   "observations": 1249,

@@ -1,0 +1,17 @@
+{
+  "source": "Federal Reserve H.6 money supply via FRED",
+  "frequency": "Monthly, seasonally adjusted",
+  "unit": "USD billions",
+  "refreshed_at_utc": "2026-11-20T18:29:17+00:00",
+  "first_observation": "1959-01-01",
+  "latest_m1": "2026-09-01",
+  "latest_m2": "2026-09-01",
+  "latest_m3": "2006-02-01",
+  "series": {
+    "m1": "M1SL",
+    "m2": "M2SL",
+    "m3": "M3SL"
+  },
+  "m1_definition_change": "2020-05",
+  "m3_discontinued": "2006-03"
+}
