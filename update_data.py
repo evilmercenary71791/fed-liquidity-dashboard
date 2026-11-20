@@ -45,6 +45,62 @@ def download(code):
             raise ValueError(f"{code}: no observations")
         return result
 
+
+MONEY_SERIES = {"m1": "M1SL", "m2": "M2SL", "m3": "M3SL"}
+
+def download_monthly(code):
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={code}&cosd=1959-01-01"
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0 FedLiquidityLab/1.0", "Accept": "text/csv"})
+    with urlopen(req, timeout=50) as response:
+        reader = csv.DictReader(io.StringIO(response.read().decode("utf-8-sig")))
+        if not reader.fieldnames or code not in reader.fieldnames:
+            raise ValueError(f"{code}: CSV columns unexpected: {reader.fieldnames}")
+        date_key = next((k for k in ("DATE", "observation_date") if k in reader.fieldnames), None)
+        if date_key is None:
+            raise ValueError(f"{code}: date column missing")
+        result = {}
+        for row in reader:
+            date = datetime.strptime(row[date_key], "%Y-%m-%d").date()
+            if date.day != 1:
+                raise ValueError(f"{code}: non-monthly observation {date}")
+            raw = row[code]
+            if raw and raw != ".":
+                result[date.isoformat()] = float(raw) # H.6 series already in USD billions
+        if not result:
+            raise ValueError(f"{code}: no observations")
+        return result
+
+def prepare_money_supply():
+    stocks = {field: download_monthly(code) for field, code in MONEY_SERIES.items()}
+    if len(stocks["m1"]) < 500 or len(stocks["m2"]) < 500 or len(stocks["m3"]) < 100:
+        raise RuntimeError("Money supply history is unexpectedly short")
+    if max(stocks["m3"]) > "2006-03-01":
+        raise RuntimeError("M3 archival series unexpectedly extends past its March 2006 discontinuation")
+    now = datetime.now(timezone.utc).date()
+    latest_m2 = datetime.strptime(max(stocks["m2"]), "%Y-%m-%d").date()
+    if now - latest_m2 > timedelta(days=110):
+        raise RuntimeError(f"M2 observations are stale: {latest_m2}")
+    dates = sorted(set().union(*[set(series) for series in stocks.values()]))
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["date", "m1", "m2", "m3"], lineterminator="\\n")
+    writer.writeheader()
+    for day in dates:
+        writer.writerow({"date": day, **{k: (round(stocks[k][day], 3) if day in stocks[k] else "") for k in MONEY_SERIES}})
+    metadata = {
+        "source": "Federal Reserve H.6 money supply via FRED",
+        "frequency": "Monthly, seasonally adjusted",
+        "unit": "USD billions",
+        "refreshed_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "first_observation": dates[0],
+        "latest_m1": max(stocks["m1"]),
+        "latest_m2": max(stocks["m2"]),
+        "latest_m3": max(stocks["m3"]),
+        "series": MONEY_SERIES,
+        "m1_definition_change": "2020-05",
+        "m3_discontinued": "2006-03",
+    }
+    return output.getvalue(), json.dumps(metadata, indent=2) + "\\n"
+
 def main():
     downloaded = {}
     optional_errors = {}
@@ -85,6 +141,9 @@ def main():
         "optional_series_errors": optional_errors,
         "methodology": "Net liquidity proxy = Fed assets - TGA - reverse repos. Reserve bridge incorporates residual other liabilities and capital.",
     }
+    money_csv, money_metadata = prepare_money_supply()
+    (DATA / "money_supply.csv").write_text(money_csv, encoding="utf-8")
+    (DATA / "money_status.json").write_text(money_metadata, encoding="utf-8")
     (DATA / "weekly.csv").write_text(output.getvalue(), encoding="utf-8")
     (DATA / "status.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
     print(f"Updated {len(dates)} Wednesday observations through {dates[-1]}")
