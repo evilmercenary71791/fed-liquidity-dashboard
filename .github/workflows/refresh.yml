@@ -20,7 +20,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data/weekly.csv data/status.json
+          git add data/weekly.csv data/status.json data/money_supply.csv data/money_status.json
           if ! git diff --cached --quiet; then
             git commit -m 'Refresh H.4.1 data'
             git push
